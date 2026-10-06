@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кодер: Текст и Пиксели 🎮⚡️🧠</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    background:#070a16;color:#e9eeff;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(900px 600px at 12% 8%, rgba(0,229,255,.18), transparent 60%),
+      radial-gradient(800px 600px at 88% 12%, rgba(255,47,185,.16), transparent 60%),
+      radial-gradient(900px 700px at 50% 100%, rgba(124,255,90,.12), transparent 60%),
+      linear-gradient(160deg,#0a0f22,#05070f 60%);
+  }
+  .screen{display:none}
+  .screen.active{display:flex}
+
+  /* ---------- START ---------- */
+  #startScreen{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:26px}
+  .hero{
+    width:min(1080px,100%);
+    background:linear-gradient(160deg,rgba(30,40,80,.92),rgba(13,18,38,.95));
+    border:1px solid rgba(0,229,255,.28);
+    border-radius:28px;padding:38px 42px;
+    box-shadow:0 0 60px rgba(0,229,255,.14), inset 0 0 60px rgba(0,229,255,.04);
+    text-align:center;
+    animation:pop .5s ease;
+  }
+  .hero h1{
+    font-size:clamp(30px,4vw,54px);line-height:1.1;font-weight:800;
+    background:linear-gradient(90deg,#00e5ff,#7cff5a,#ff2fb9);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    margin-bottom:10px;letter-spacing:.5px;
+  }
+  .hero .sub{font-size:clamp(15px,1.5vw,20px);color:#9fb2d8;margin-bottom:26px}
+  .hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px;text-align:left}
+  .hero-card{
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);
+    border-radius:16px;padding:16px 18px;
+  }
+  .hero-card h3{font-size:16px;margin-bottom:8px;color:#00e5ff;letter-spacing:.4px}
+  .hero-card p{font-size:14.5px;color:#b9c7e6;line-height:1.5}
+  .hero-card b{color:#7cff5a}
+  .btn{
+    font-family:inherit;font-weight:800;cursor:pointer;border:none;border-radius:16px;
+    transition:transform .15s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .btn-main{
+    font-size:clamp(18px,2vw,24px);padding:18px 52px;color:#04121a;
+    background:linear-gradient(90deg,#00e5ff,#7cff5a);
+    box-shadow:0 0 30px rgba(0,229,255,.5);
+    letter-spacing:.5px;
+  }
+  .btn-main:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 0 46px rgba(124,255,90,.6)}
+  .btn-main:active{transform:translateY(0) scale(.99)}
+
+  /* ---------- HUD ---------- */
+  #gameScreen.active{flex-direction:column;height:100vh;overflow:hidden}
+  #hud{
+    display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+    padding:10px 22px;background:rgba(8,12,26,.88);
+    border-bottom:2px solid rgba(0,229,255,.22);
+    backdrop-filter:blur(10px);z-index:5;
+  }
+  .lives{display:flex;gap:3px;font-size:clamp(15px,1.3vw,21px);letter-spacing:1px}
+  .heart{transition:transform .25s ease, filter .25s ease;display:inline-block}
+  .heart.dead{filter:grayscale(1) brightness(.55)}
+  .heart.alive{animation:beat 1.6s infinite ease-in-out}
+  @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.13)}}
+  .hud-center{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:210px}
+  .timer{font-size:clamp(22px,2.2vw,32px);font-weight:800;font-variant-numeric:tabular-nums;color:#7cff5a;letter-spacing:2px;text-shadow:0 0 18px rgba(124,255,90,.5)}
+  .timer.low{color:#ff4d6d;text-shadow:0 0 18px rgba(255,77,109,.7);animation:pulse .9s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .timebar{width:210px;height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+  .timebar-fill{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#00e5ff,#7cff5a);transition:width .4s linear}
+  .timebar-fill.low{background:linear-gradient(90deg,#ff2fb9,#ff4d6d)}
+  .hud-right{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .stat{
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    border-radius:14px;padding:6px 14px;display:flex;flex-direction:column;align-items:center;min-width:78px;
+  }
+  .stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8093b8}
+  .stat .val{font-size:clamp(15px,1.4vw,20px);font-weight:800;color:#00e5ff;font-variant-numeric:tabular-nums}
+  .stat.hot .val{color:#ffb703;text-shadow:0 0 14px rgba(255,183,3,.7)}
+  .stat.hot{border-color:rgba(255,183,3,.5);box-shadow:0 0 18px rgba(255,183,3,.2)}
+
+  /* ---------- STAGE ---------- */
+  #stage{flex:1;overflow-y:auto;padding:22px;display:flex;justify-content:center;align-items:flex-start}
+  .card{
+    width:min(1120px,100%);
+    background:linear-gradient(160deg,rgba(28,37,74,.95),rgba(12,17,35,.97));
+    border:1px solid rgba(0,229,255,.26);
+    border-radius:24px;padding:24px 30px 28px;
+    box-shadow:0 0 44px rgba(0,229,255,.12);
+    animation:pop .32s ease;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.99)}to{opacity:1;transform:none}}
+  .task-head{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .chip{font-size:12.5px;font-weight:700;letter-spacing:.6px;padding:6px 14px;border-radius:99px;text-transform:uppercase}
+  .chip.block-1{background:rgba(124,255,90,.15);color:#7cff5a;border:1px solid rgba(124,255,90,.4)}
+  .chip.block-2{background:rgba(0,229,255,.14);color:#00e5ff;border:1px solid rgba(0,229,255,.4)}
+  .chip.block-3{background:rgba(255,47,185,.15);color:#ff6fd0;border:1px solid rgba(255,47,185,.42)}
+  .chip.type{background:rgba(255,255,255,.06);color:#b9c7e6;border:1px solid rgba(255,255,255,.13)}
+  .chip.num{background:rgba(255,183,3,.13);color:#ffb703;border:1px solid rgba(255,183,3,.35)}
+  .question{font-size:clamp(19px,1.9vw,27px);line-height:1.42;font-weight:700;margin-bottom:22px;color:#f2f6ff}
+
+  /* choice */
+  .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .opt{
+    display:flex;align-items:center;gap:14px;text-align:left;
+    font-family:inherit;font-size:clamp(16px,1.4vw,20px);font-weight:600;color:#e9eeff;
+    background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.11);
+    border-radius:16px;padding:16px 18px;cursor:pointer;
+    transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease;
+  }
+  .opt .letter{
+    flex:0 0 36px;height:36px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(0,229,255,.14);color:#00e5ff;font-weight:800;font-size:16px;
+  }
+  .opt:hover:not(:disabled){transform:translateY(-3px);border-color:rgba(0,229,255,.6);box-shadow:0 0 24px rgba(0,229,255,.22);background:rgba(0,229,255,.08)}
+  .opt:disabled{cursor:default}
+  .opt.picked-ok{border-color:#7cff5a;background:rgba(124,255,90,.16);box-shadow:0 0 26px rgba(124,255,90,.32)}
+  .opt.picked-bad{border-color:#ff4d6d;background:rgba(255,77,109,.15)}
+  .opt.reveal{border-color:#7cff5a;background:rgba(124,255,90,.12)}
+
+  /* truefalse */
+  .tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .tf-btn{
+    font-family:inherit;font-size:clamp(18px,1.8vw,25px);font-weight:800;color:#e9eeff;
+    padding:34px 18px;border-radius:20px;cursor:pointer;
+    border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
+    transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease;
+  }
+  .tf-btn:hover:not(:disabled){transform:translateY(-3px)}
+  .tf-btn.t{--c:#7cff5a}
+  .tf-btn.f{--c:#ff4d6d}
+  .tf-btn:hover:not(:disabled){border-color:var(--c);box-shadow:0 0 26px color-mix(in srgb,var(--c) 35%,transparent)}
+
+  /* matching */
+  .match-wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .match-col{display:flex;flex-direction:column;gap:10px}
+  .col-title{font-size:12.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#8093b8;margin-bottom:4px}
+  .m-item{
+    font-family:inherit;font-size:clamp(15px,1.3vw,18px);font-weight:600;color:#e9eeff;text-align:left;
+    background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.11);
+    border-radius:14px;padding:13px 16px;cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    transition:transform .13s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease;
+  }
+  .m-item:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(0,229,255,.55)}
+  .m-item.sel{border-color:#ffb703;box-shadow:0 0 22px rgba(255,183,3,.35);background:rgba(255,183,3,.1)}
+  .m-item.done{border-color:rgba(124,255,90,.6);background:rgba(124,255,90,.09)}
+  .m-item.used{opacity:.38;cursor:default}
+  .m-chip{font-size:13px;font-weight:800;color:#7cff5a;background:rgba(124,255,90,.13);border-radius:99px;padding:4px 10px;white-space:nowrap}
+
+  /* category */
+  .cat-pool{background:rgba(255,255,255,.035);border:1px dashed rgba(255,255,255,.14);border-radius:16px;padding:14px;margin-bottom:18px}
+  .pool-items{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .chip-item{
+    font-family:inherit;font-size:clamp(14px,1.25vw,17px);font-weight:700;color:#e9eeff;
+    background:rgba(0,229,255,.1);border:2px solid rgba(0,229,255,.3);
+    border-radius:12px;padding:10px 15px;cursor:pointer;
+    transition:transform .13s ease,box-shadow .2s ease,border-color .2s ease;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .chip-item:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 18px rgba(0,229,255,.3)}
+  .chip-item.sel{border-color:#ffb703;background:rgba(255,183,3,.16);box-shadow:0 0 20px rgba(255,183,3,.4)}
+  .cat-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .cat-col{
+    background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);
+    border-radius:16px;padding:14px;min-height:150px;cursor:pointer;
+    transition:border-color .2s ease,box-shadow .2s ease;
+  }
+  .cat-col:hover{border-color:rgba(0,229,255,.45);box-shadow:0 0 22px rgba(0,229,255,.14)}
+  .cat-body{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+
+  /* order */
+  .order-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:20px}
+  .order-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .order-box{background:rgba(255,255,255,.035);border:1px dashed rgba(255,255,255,.14);border-radius:16px;padding:14px;min-height:170px}
+  .num-badge{
+    flex:0 0 26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    background:linear-gradient(90deg,#00e5ff,#7cff5a);color:#04121a;font-weight:900;font-size:14px;
+  }
+  .chip-item.inlist{width:100%;justify-content:flex-start;background:rgba(124,255,90,.1);border-color:rgba(124,255,90,.34)}
+
+  /* feedback */
+  .feedback{
+    margin-top:20px;border-radius:18px;padding:18px 22px;
+    display:flex;flex-direction:column;gap:10px;align-items:flex-start;
+    animation:pop .3s ease;
+  }
+  .feedback.ok{background:rgba(124,255,90,.11);border:2px solid rgba(124,255,90,.45);box-shadow:0 0 30px rgba(124,255,90,.16)}
+  .feedback.bad{background:rgba(255,77,109,.1);border:2px solid rgba(255,77,109,.45);box-shadow:0 0 30px rgba(255,77,109,.14)}
+  .fb-title{font-size:clamp(18px,1.7vw,23px);font-weight:800}
+  .feedback.ok .fb-title{color:#7cff5a}
+  .feedback.bad .fb-title{color:#ff6b85}
+  .fb-sub{font-size:clamp(14px,1.25vw,17px);color:#c3d0ea;line-height:1.5}
+  .fb-sub b{color:#ffb703}
+  .btn.check{
+    display:block;margin:22px auto 0;font-size:clamp(16px,1.5vw,20px);padding:14px 44px;
+    color:#04121a;background:linear-gradient(90deg,#00e5ff,#7cff5a);box-shadow:0 0 26px rgba(0,229,255,.4);
+  }
+  .btn.check:disabled{opacity:.35;filter:grayscale(.6);cursor:not-allowed;box-shadow:none;transform:none}
+  .btn.check:hover:not(:disabled){transform:translateY(-3px)}
+  .btn.next{
+    align-self:flex-end;font-size:clamp(15px,1.4vw,19px);padding:13px 34px;color:#04121a;
+    background:linear-gradient(90deg,#7cff5a,#00e5ff);box-shadow:0 0 24px rgba(124,255,90,.4);
+  }
+  .btn.next:hover{transform:translateY(-3px)}
+
+  /* ---------- END ---------- */
+  #endScreen{flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:26px}
+  .end-card{
+    width:min(900px,100%);text-align:center;
+    background:linear-gradient(160deg,rgba(30,40,80,.94),rgba(12,17,35,.97));
+    border:1px solid rgba(0,229,255,.3);border-radius:28px;padding:38px 40px;
+    box-shadow:0 0 60px rgba(0,229,255,.16);animation:pop .5s ease;
+  }
+  .end-emoji{font-size:64px;line-height:1;margin-bottom:8px}
+  .end-title{font-size:clamp(28px,3.4vw,44px);font-weight:900;margin-bottom:8px}
+  .end-title.win{background:linear-gradient(90deg,#7cff5a,#00e5ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .end-title.lose{color:#ff6b85}
+  .end-msg{color:#9fb2d8;font-size:16px;margin-bottom:24px}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:26px}
+  .stat-big{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 10px}
+  .stat-big .v{font-size:clamp(22px,2.4vw,32px);font-weight:900;color:#00e5ff}
+  .stat-big .k{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8093b8;margin-top:4px}
+  .badges-title{font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8093b8;margin-bottom:14px}
+  .badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:28px}
+  .badge-card{
+    border-radius:18px;padding:16px;text-align:left;
+    background:rgba(255,255,255,.035);border:2px solid rgba(255,255,255,.08);
+    opacity:.45;filter:grayscale(.7);transition:all .3s ease;
+  }
+  .badge-card.earned{
+    opacity:1;filter:none;border-color:rgba(255,183,3,.55);
+    background:linear-gradient(160deg,rgba(255,183,3,.14),rgba(255,47,185,.08));
+    box-shadow:0 0 26px rgba(255,183,3,.22);
+  }
+  .badge-card .bi{font-size:30px}
+  .badge-card .bn{font-weight:800;font-size:16px;margin:6px 0 4px}
+  .badge-card .bd{font-size:13px;color:#a9b8d6;line-height:1.4}
+  .badge-card .new{display:inline-block;margin-top:8px;font-size:11px;font-weight:900;letter-spacing:1px;color:#04121a;background:#ffb703;border-radius:99px;padding:3px 10px}
+  .best-line{color:#8093b8;font-size:14px;margin-bottom:22px}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:900px){
+    .choice-grid,.tf-grid,.match-wrap,.cat-cols,.order-wrap{grid-template-columns:1fr}
+    .hero{padding:26px 22px}
+    .card{padding:20px 18px 22px}
+    #hud{justify-content:center;gap:10px;padding:10px}
+    .hud-right{justify-content:center}
+    .timebar{width:160px}
+  }
+  @media (min-width:1600px){
+    .card{width:min(1240px,100%)}
+    .question{font-size:29px}
+  }
+  ::-webkit-scrollbar{width:10px}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,.03)}
+  ::-webkit-scrollbar-thumb{background:rgba(0,229,255,.28);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- ================= START ================= -->
+<div id="startScreen" class="screen active">
+  <div class="hero">
+    <h1>🎮 КОДЕР: ТЕКСТ И ПИКСЕЛИ ⚡️</h1>
+    <p class="sub">Информатика · 7 класс · Кодирование текстовой информации и монохромного изображения</p>
+
+    <div class="hero-grid">
+      <div class="hero-card">
+        <h3>🎯 Цель</h3>
+        <p>Применять алгоритмы <b>кодирования и декодирования</b> текста и монохромных изображений.</p>
+      </div>
+      <div class="hero-card">
+        <h3>🧩 30 заданий</h3>
+        <p>3 блока: <b>Новичок</b> 🌱, <b>Любитель</b> 🚀, <b>Профи</b> 👑. 5 типов заданий: выбор, верно/неверно, соответствие, категории, порядок.</p>
+      </div>
+      <div class="hero-card">
+        <h3>❤️ 10 жизней · ⏱ 25 минут</h3>
+        <p>Ошибка — минус жизнь. Успей пройти всё до конца таймера!</p>
+      </div>
+      <div class="hero-card">
+        <h3>💎 Очки и серии</h3>
+        <p><b>100</b> за верный ответ + бонус за скорость + множитель серии <b>×1.5</b> (3 подряд) и <b>×2.0</b> (5 подряд).</p>
+      </div>
+    </div>
+
+    <button class="btn btn-main" id="startBtn">🚀 НАЧАТЬ ИГРУ</button>
+  </div>
+</div>
+
+<!-- ================= GAME ================= -->
+<div id="gameScreen" class="screen">
+  <header id="hud">
+    <div class="lives" id="lives"></div>
+    <div class="hud-center">
+      <div class="timer" id="timer">25:00</div>
+      <div class="timebar"><div class="timebar-fill" id="timebarFill"></div></div>
+    </div>
+    <div class="hud-right">
+      <div class="stat"><span class="lbl">Очки</span><span class="val" id="score">0</span></div>
+      <div class="stat" id="comboBox"><span class="lbl">Серия</span><span class="val" id="combo">x1.0</span></div>
+      <div class="stat"><span class="lbl">Задание</span><span class="val" id="progress">1/30</span></div>
+    </div>
+  </header>
+  <main id="stage"></main>
+</div>
+
+<!-- ================= END ================= -->
+<div id="endScreen" class="screen">
+  <div class="end-card">
+    <div class="end-emoji" id="endEmoji">🏆</div>
+    <div class="end-title win" id="endTitle">Победа!</div>
+    <div class="end-msg" id="endMsg"></div>
+
+    <div class="stats-grid">
+      <div class="stat-big"><div class="v" id="finalScore">0</div><div class="k">Очки</div></div>
+      <div class="stat-big"><div class="v" id="finalCorrect">0</div><div class="k">Верных</div></div>
+      <div class="stat-big"><div class="v" id="finalCombo">0</div><div class="k">Макс. серия</div></div>
+      <div class="stat-big"><div class="v" id="finalTime">0:00</div><div class="k">Осталось</div></div>
+    </div>
+
+    <div class="badges-title">🏅 Достижения</div>
+    <div class="badges" id="badgesBox"></div>
+
+    <div class="best-line" id="bestLine"></div>
+    <button class="btn btn-main" id="againBtn">🔁 ИГРАТЬ СНОВА</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   ДАННЫЕ: 30 ЗАДАНИЙ
+   ========================================================= */
+const TASKS = [
+/* ---------------- БЛОК 1: НОВИЧОК ---------------- */
+{ block:1, type:'choice', tag:'pixel',
+  q:'Что означает цифра 0 при кодировании монохромного пикселя?',
+  options:['Белый пиксель','Чёрный пиксель','Серый пиксель','Прозрачный пиксель'],
+  correct:0,
+  exp:'В монохромном коде 0 — белый (светлый) пиксель, 1 — чёрный.' },
+
+{ block:1, type:'truefalse', tag:'text',
+  q:'В кодировочной таблице ASCII один символ занимает 8 бит (1 байт) памяти.',
+  correct:true,
+  exp:'Классическая таблица ASCII: 1 символ = 8 бит = 1 байт.' },
+
+{ block:1, type:'matching', tag:'both',
+  q:'Сопоставь кодировку и её размер:',
+  pairs:[
+    ['ASCII','8 бит'],
+    ['Unicode','16 бит'],
+    ['1 пиксель монохрома','1 бит'],
+    ['1 байт','8 бит']
+  ],
+  exp:'ASCII — 8 бит, Unicode — 16 бит, монохромный пиксель — 1 бит.' },
+
+{ block:1, type:'category', tag:'both',
+  q:'Распредели единицы измерения и кодировки по категориям:',
+  cats:['Единицы измерения','Кодировки'],
+  items:[
+    {t:'Бит',c:0},{t:'Байт',c:0},{t:'Килобайт',c:0},
+    {t:'ASCII',c:1},{t:'Unicode',c:1},{t:'Windows-1251',c:1}
+  ],
+  exp:'Бит, байт, килобайт — единицы измерения. ASCII, Unicode, Windows-1251 — кодировки.' },
+
+{ block:1, type:'choice', tag:'text',
+  q:'Какая формула вычисляет объём текста I через количество символов K и вес символа i?',
+  options:['I = K * i','I = K / i','I = K + i','I = K - i'],
+  correct:0,
+  exp:'Информационный объём текста: I = K · i.' },
+
+{ block:1, type:'truefalse', tag:'pixel',
+  q:'В монохромном изображении используется более 256 различных цветов.',
+  correct:false,
+  exp:'Монохромное изображение использует всего 2 цвета: белый и чёрный.' },
+
+{ block:1, type:'choice', tag:'both',
+  q:'Сколько байт содержат 16 бит памяти?',
+  options:['2 байта','1 байт','8 байт','16 байт'],
+  correct:0,
+  exp:'1 байт = 8 бит, значит 16 бит = 2 байта.' },
+
+{ block:1, type:'order', tag:'both',
+  q:'Упорядочи единицы измерения от наименьшей к наибольшей:',
+  order:['Бит','Байт','Килобайт','Мегабайт'],
+  exp:'Бит → Байт → Килобайт → Мегабайт.' },
+
+{ block:1, type:'choice', tag:'text',
+  q:'Как называется процесс восстановления исходного текста из двоичного кода?',
+  options:['Декодирование','Моделирование','Архивация','Сканирование'],
+  correct:0,
+  exp:'Декодирование — обратный процесс к кодированию.' },
+
+{ block:1, type:'truefalse', tag:'pixel',
+  q:'Цифра 1 в монохромном кодировании обозначает чёрный пиксель.',
+  correct:true,
+  exp:'Да: 1 — чёрный пиксель, 0 — белый.' },
+
+/* ---------------- БЛОК 2: ЛЮБИТЕЛЬ ---------------- */
+{ block:2, type:'choice', tag:'pixel',
+  q:'Какой двоичный код соответствует строке пикселей: Белый, Чёрный, Белый, Чёрный?',
+  options:['0101','1010','0011','1100'],
+  correct:0,
+  exp:'Белый = 0, чёрный = 1, поэтому получаем 0101.' },
+
+{ block:2, type:'matching', tag:'pixel',
+  q:'Сопоставь двоичный код с последовательностью цветов:',
+  pairs:[
+    ['0011','Белый-Белый-Чёрный-Чёрный'],
+    ['1100','Чёрный-Чёрный-Белый-Белый'],
+    ['1010','Чёрный-Белый-Чёрный-Белый'],
+    ['0110','Белый-Чёрный-Чёрный-Белый']
+  ],
+  exp:'0 — белый, 1 — чёрный. Читаем код слева направо.' },
+
+{ block:2, type:'choice', tag:'text',
+  q:'Найди объём слова «АЛГОРИТМ» (8 символов) в кодировке ASCII (в байтах).',
+  options:['8 байт','16 байт','64 байта','1 байт'],
+  correct:0,
+  exp:'В ASCII 1 символ = 1 байт, значит 8 символов = 8 байт.' },
+
+{ block:2, type:'order', tag:'pixel',
+  q:'Расставь шаги алгоритма кодирования монохромного рисунка:',
+  order:['Наложить сетку пикселей','Определить цвет каждого пикселя','Заменить белые на 0, чёрные на 1','Записать полученный двоичный код'],
+  exp:'Сетка → цвет → замена на 0 и 1 → запись кода.' },
+
+{ block:2, type:'category', tag:'both',
+  q:'Раздели понятия на текстовые и графические данные:',
+  cats:['Текстовые данные','Графические данные'],
+  items:[
+    {t:'Кодировка ASCII',c:0},{t:'Таблица Unicode',c:0},{t:"Код символа 'A'",c:0},
+    {t:'Пиксельная матрица',c:1},{t:'Разрешение 8х8',c:1},{t:'Двоичный код пикселя',c:1}
+  ],
+  exp:'Текст кодируется таблицами символов, изображение — пиксельной сеткой.' },
+
+{ block:2, type:'truefalse', tag:'pixel',
+  q:'Монохромная картинка размером 5х5 пикселей занимает 25 бит памяти.',
+  correct:true,
+  exp:'5 · 5 = 25 пикселей, по 1 биту на пиксель = 25 бит.' },
+
+{ block:2, type:'choice', tag:'pixel',
+  q:'Декодируй бинарный код «11100» для строки пикселей:',
+  options:['3 чёрных и 2 белых','2 чёрных и 3 белых','5 чёрных','5 белых'],
+  correct:0,
+  exp:'1,1,1 — три чёрных; 0,0 — два белых.' },
+
+{ block:2, type:'choice', tag:'text',
+  q:'Сколько символов содержит файл объёмом 40 байт в кодировке Unicode (16 бит = 2 байта на символ)?',
+  options:['20 символов','40 символов','10 символов','80 символов'],
+  correct:0,
+  exp:'40 байт : 2 байта = 20 символов.' },
+
+{ block:2, type:'matching', tag:'text',
+  q:'Найди соответствие слова и его информационного объёма в ASCII:',
+  pairs:[
+    ['«Код»','3 байта'],
+    ['«Информатика»','11 байт'],
+    ['«ИИ»','2 байта'],
+    ['«7 класс»','7 байт']
+  ],
+  exp:'В ASCII объём в байтах равен количеству символов (пробел тоже символ).' },
+
+{ block:2, type:'truefalse', tag:'text',
+  q:'В кодировке Unicode слово из 5 символов занимает 40 бит.',
+  correct:false,
+  exp:'Неверно: 5 символов · 16 бит = 80 бит (а 40 бит — это 5 символов в ASCII).' },
+
+/* ---------------- БЛОК 3: ПРОФИ ---------------- */
+{ block:3, type:'choice', tag:'pixel',
+  q:'Каков информационный объём монохромного изображения 8х8 пикселей в БАЙТАХ?',
+  options:['8 байт','64 байта','16 байт','1 байт'],
+  correct:0,
+  exp:'8 · 8 = 64 пикселя = 64 бита = 8 байт.' },
+
+{ block:3, type:'order', tag:'pixel',
+  q:'Восстанови порядок декодирования изображения из двоичного кода:',
+  order:['Получить цепочку 0 и 1','Разбить цепочку на строки равной длины','Подготовить пустую пиксельную сетку','Закрасить чёрным клетки с единицами'],
+  exp:'Код → строки → сетка → закрашивание единиц.' },
+
+{ block:3, type:'choice', tag:'pixel',
+  q:'Картинка 10х10 пикселей закодирована в монохроме. Сколько БИТ памяти она занимает?',
+  options:['100 бит','10 бит','800 бит','100 байт'],
+  correct:0,
+  exp:'10 · 10 = 100 пикселей, по 1 биту = 100 бит.' },
+
+{ block:3, type:'matching', tag:'pixel',
+  q:'Сопоставь размер монохромной картинки и её объём в байтах:',
+  pairs:[
+    ['4х4 пикселя','2 байта'],
+    ['8х8 пикселей','8 байт'],
+    ['8х10 пикселей','10 байт'],
+    ['16х16 пикселей','32 байта']
+  ],
+  exp:'Считаем пиксели, получаем биты, делим на 8 — получаем байты.' },
+
+{ block:3, type:'category', tag:'both',
+  q:'Классифицируй особенности кодирования:',
+  cats:['Кодирование текста','Кодирование монохрома'],
+  items:[
+    {t:'Таблицы ASCII и Unicode',c:0},{t:'Символьный объём I = K · i',c:0},{t:'8 или 16 бит на символ',c:0},
+    {t:'Растровая сетка A×B',c:1},{t:'1 бит на пиксель',c:1},{t:'0 — белый, 1 — чёрный',c:1}
+  ],
+  exp:'Текст — таблицы и вес символа, монохром — сетка и 1 бит на пиксель.' },
+
+{ block:3, type:'truefalse', tag:'both',
+  q:'Монохромная картинка 8х8 пикселей занимает столько же памяти, сколько 8 символов текста в ASCII.',
+  correct:true,
+  exp:'Верно: 64 бита = 8 байт — столько же, сколько 8 символов ASCII.' },
+
+{ block:3, type:'choice', tag:'text',
+  q:'Сообщение занимает 160 бит в кодировке Unicode (16 бит/символ). Сколько в нём символов?',
+  options:['10 символов','20 символов','16 символов','160 символов'],
+  correct:0,
+  exp:'160 бит : 16 бит = 10 символов.' },
+
+{ block:3, type:'order', tag:'pixel',
+  q:'Упорядочи размеры монохромных изображений по возрастанию объёма памяти:',
+  order:['4х4 пикселя (16 бит)','5х5 пикселей (25 бит)','8х8 пикселей (64 бита)','10х10 пикселей (100 бит)'],
+  exp:'16 < 25 < 64 < 100 бит.' },
+
+{ block:3, type:'choice', tag:'pixel',
+  q:'В монохромной строке из 8 пикселей ровно половина — чёрные. Сколько единиц в двоичном коде этой строки?',
+  options:['4 единицы','8 единиц','2 единицы','0 единиц'],
+  correct:0,
+  exp:'Половина от 8 = 4 чёрных пикселя = 4 единицы.' },
+
+{ block:3, type:'truefalse', tag:'text',
+  q:'При перекодировании текста из Unicode (16 бит) в ASCII (8 бит) его объём увеличивается в 2 раза.',
+  correct:false,
+  exp:'Неверно: объём УМЕНЬШАЕТСЯ в 2 раза (16 бит → 8 бит на символ).' }
+];
+
+/* =========================================================
+   КОНСТАНТЫ И СОСТОЯНИЕ
+   ========================================================= */
+const TOTAL_TIME = 25 * 60;
+const MAX_LIVES  = 10;
+
+const BLOCK_INFO = {
+  1:{name:'Блок 1 · Новичок', cls:'block-1'},
+  2:{name:'Блок 2 · Любитель', cls:'block-2'},
+  3:{name:'Блок 3 · Профи', cls:'block-3'}
+};
+const TYPE_INFO = {
+  choice:'Выбор ответа',
+  truefalse:'Верно / Неверно',
+  matching:'Соответствие',
+  category:'Категории',
+  order:'Порядок'
+};
+const BADGE_DEFS = [
+  {id:'ascii', icon:'🔤', name:'Знаток ASCII', desc:'Ни одной ошибки в заданиях на кодирование текста'},
+  {id:'pixel', icon:'🖼️', name:'Пиксельный мастер', desc:'Ни одной ошибки в заданиях на монохромные изображения'},
+  {id:'speed', icon:'⚡️', name:'Скоростной кодер', desc:'Пройти игру, оставив больше 10 минут на таймере'}
+];
+
+const LS_BADGES = 'coderGameBadges_v1';
+const LS_BEST   = 'coderGameBest_v1';
+
+let state = null;
+let locked = false;
+let currentCard = null;
+let timerId = null;
+
+/* =========================================================
+   УТИЛИТЫ
+   ========================================================= */
+const $ = id => document.getElementById(id);
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function fmtTime(sec){
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function loadBadges(){
+  try { return JSON.parse(localStorage.getItem(LS_BADGES)) || {}; } catch(e){ return {}; }
+}
+function saveBadges(b){
+  try { localStorage.setItem(LS_BADGES, JSON.stringify(b)); } catch(e){}
+}
+function loadBest(){
+  try { const v = parseInt(localStorage.getItem(LS_BEST), 10); return isNaN(v) ? 0 : v; } catch(e){ return 0; }
+}
+function saveBest(v){
+  try { localStorage.setItem(LS_BEST, String(v)); } catch(e){}
+}
+
+/* =========================================================
+   ЗВУК (Web Audio API, только в финале)
+   ========================================================= */
+let audioCtx = null;
+function initAudio(){
+  if(audioCtx) { if(audioCtx.state === 'suspended') audioCtx.resume(); return; }
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(AC) audioCtx = new AC();
+  } catch(e){ audioCtx = null; }
+}
+function tone(freq, delay, dur, type, vol){
+  if(!audioCtx) return;
+  const t0 = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || 'triangle';
+  osc.frequency.setValueAtTime(freq, t0);
+  osc.connect(g);
+  g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.025);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.05);
+}
+function playWin(){
+  initAudio();
+  const mel = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+  mel.forEach((f,i)=> tone(f, i * 0.15, 0.34, 'triangle', 0.18));
+  [523.25, 659.25, 783.99, 1046.50].forEach(f => tone(f, 0.82, 1.25, 'sine', 0.075));
+  tone(1046.50, 0.82, 1.25, 'triangle', 0.14);
+  tone(1318.51, 1.15, 0.9, 'sine', 0.09);
+}
+function playLose(){
+  initAudio();
+  const mel = [392.00, 349.23, 311.13, 261.63];
+  mel.forEach((f,i)=> tone(f, i * 0.22, 0.42, 'sawtooth', 0.10));
+  tone(196.00, 0.95, 1.1, 'sine', 0.11);
+  tone(155.56, 0.95, 1.3, 'sine', 0.08);
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+function updateHUD(){
+  let hearts = '';
+  for(let i = 0; i < MAX_LIVES; i++){
+    const alive = i < state.lives;
+    hearts += '<span class="heart ' + (alive ? 'alive' : 'dead') + '">' + (alive ? '❤️' : '🖤') + '</span>';
+  }
+  $('lives').innerHTML = hearts;
+
+  $('score').textContent = state.score;
+
+  let mult = 1;
+  if(state.combo >= 5) mult = 2;
+  else if(state.combo >= 3) mult = 1.5;
+  $('combo').textContent = 'x' + mult.toFixed(1);
+  $('comboBox').classList.toggle('hot', state.combo >= 3);
+
+  $('progress').textContent = Math.min(state.idx + 1, TASKS.length) + '/' + TASKS.length;
+
+  const tEl = $('timer');
+  tEl.textContent = fmtTime(Math.max(0, state.timeLeft));
+  tEl.classList.toggle('low', state.timeLeft <= 300);
+
+  const fill = $('timebarFill');
+  fill.style.width = Math.max(0, (state.timeLeft / TOTAL_TIME) * 100) + '%';
+  fill.classList.toggle('low', state.timeLeft <= 300);
+}
+
+/* =========================================================
+   ОТРИСОВКА ЗАДАНИЙ
+   ========================================================= */
+function renderTask(){
+  const t = TASKS[state.idx];
+  locked = false;
+
+  const stage = $('stage');
+  stage.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  currentCard = card;
+
+  const head = document.createElement('div');
+  head.className = 'task-head';
+  const bi = BLOCK_INFO[t.block];
+  head.innerHTML =
+    '<span class="chip ' + bi.cls + '">' + bi.name + '</span>' +
+    '<span class="chip type">' + TYPE_INFO[t.type] + '</span>' +
+    '<span class="chip num">Задание ' + (state.idx + 1) + '/' + TASKS.length + '</span>';
+  card.appendChild(head);
+
+  const q = document.createElement('h2');
+  q.className = 'question';
+  q.textContent = t.q;
+  card.appendChild(q);
+
+  const host = document.createElement('div');
+  host.className = 'host';
+  card.appendChild(host);
+
+  stage.appendChild(card);
+  updateHUD();
+
+  if(t.type === 'choice')       renderChoice(t, host);
+  else if(t.type === 'truefalse') renderTrueFalse(t, host);
+  else if(t.type === 'matching')  renderMatching(t, host);
+  else if(t.type === 'category')  renderCategory(t, host);
+  else if(t.type === 'order')     renderOrder(t, host);
+}
+
+/* ---------- choice ---------- */
+function renderChoice(t, host){
+  const wrap = document.createElement('div');
+  wrap.className = 'choice-grid';
+  const letters = ['А','Б','В','Г'];
+
+  t.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = '<span class="letter">' + letters[i] + '</span><span>' + opt + '</span>';
+    b.onclick = () => {
+      if(locked) return;
+      if(i !== t.correct){
+        b.classList.add('picked-bad');
+        wrap.children[t.correct].classList.add('reveal');
+      } else {
+        b.classList.add('picked-ok');
+      }
+      submitAnswer(i === t.correct, t.options[t.correct]);
+    };
+    wrap.appendChild(b);
+  });
+
+  host.appendChild(wrap);
+}
+
+/* ---------- truefalse ---------- */
+function renderTrueFalse(t, host){
+  const wrap = document.createElement('div');
+  wrap.className = 'tf-grid';
+
+  const variants = [
+    {label:'✅ ВЕРНО', val:true, cls:'t'},
+    {label:'❌ НЕВЕРНО', val:false, cls:'f'}
+  ];
+
+  variants.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'tf-btn ' + v.cls;
+    b.textContent = v.label;
+    b.onclick = () => {
+      if(locked) return;
+      submitAnswer(v.val === t.correct, t.correct ? 'Верно' : 'Неверно');
+    };
+    wrap.appendChild(b);
+  });
+
+  host.appendChild(wrap);
+}
+
+/* ---------- matching ---------- */
+function renderMatching(t, host){
+  const lefts  = shuffle(t.pairs.map((p, i) => ({id:i, text:p[0]})));
+  const rights = shuffle(t.pairs.map((p, i) => ({id:i, text:p[1]})));
+  const assign = {};   // leftId -> rightId
+  let sel = null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'match-wrap';
+
+  const colL = document.createElement('div');
+  colL.className = 'match-col';
+  colL.innerHTML = '<div class="col-title">Понятие</div>';
+
+  const colR = document.createElement('div');
+  colR.className = 'match-col';
+  colR.innerHTML = '<div class="col-title">Значение</div>';
+
+  wrap.appendChild(colL);
+  wrap.appendChild(colR);
+  host.appendChild(wrap);
+
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn check';
+  checkBtn.textContent = 'Проверить ✅';
+  checkBtn.disabled = true;
+  host.appendChild(checkBtn);
+
+  function draw(){
+    colL.querySelectorAll('.m-item').forEach(e => e.remove());
+    colR.querySelectorAll('.m-item').forEach(e => e.remove());
+
+    lefts.forEach(l => {
+      const b = document.createElement('button');
+      const isAssigned = assign[l.id] !== undefined;
+      b.className = 'm-item' + (sel === l.id ? ' sel' : '') + (isAssigned ? ' done' : '');
+      let inner = '<span>' + l.text + '</span>';
+      if(isAssigned){
+        const r = rights.find(x => x.id === assign[l.id]);
+        inner += '<span class="m-chip">→ ' + r.text + '</span>';
+      }
+      b.innerHTML = inner;
+      b.onclick = () => {
+        if(locked) return;
+        if(assign[l.id] !== undefined){
+          delete assign[l.id];
+          sel = null;
+        } else {
+          sel = (sel === l.id) ? null : l.id;
+        }
+        draw();
+      };
+      colL.appendChild(b);
+    });
+
+    const usedRights = Object.values(assign);
+
+    rights.forEach(r => {
+      const used = usedRights.indexOf(r.id) !== -1;
+      const b = document.createElement('button');
+      b.className = 'm-item' + (used ? ' used' : '');
+      b.textContent = r.text;
+      b.disabled = used;
+      b.onclick = () => {
+        if(locked || used || sel === null) return;
+        assign[sel] = r.id;
+        sel = null;
+        draw();
+      };
+      colR.appendChild(b);
+    });
+
+    checkBtn.disabled = Object.keys(assign).length !== lefts.length;
+  }
+  draw();
+
+  checkBtn.onclick = () => {
+    if(locked) return;
+    const ok = lefts.every(l => {
+      const rid = assign[l.id];
+      if(rid === undefined) return false;
+      const r = rights.find(x => x.id === rid);
+      return r && r.text === t.pairs[l.id][1];
+    });
+    const correctStr = t.pairs.map(p => p[0] + ' → ' + p[1]).join('; ');
+    submitAnswer(ok, correctStr);
+  };
+}
+
+/* ---------- category ---------- */
+function renderCategory(t, host){
+  const items = shuffle(t.items.map((it, i) => ({id:i, text:it.t, cat:it.c})));
+  const place = {};  // itemId -> catIndex
+  let sel = null;
+
+  const pool = document.createElement('div');
+  pool.className = 'cat-pool';
+  const poolTitle = document.createElement('div');
+  poolTitle.className = 'col-title';
+  poolTitle.textContent = 'Элементы (кликни, затем выбери колонку)';
+  const poolItems = document.createElement('div');
+  poolItems.className = 'pool-items';
+  pool.appendChild(poolTitle);
+  pool.appendChild(poolItems);
+  host.appendChild(pool);
+
+  const colsWrap = document.createElement('div');
+  colsWrap.className = 'cat-cols';
+  const colEls = t.cats.map((c, i) => {
+    const root = document.createElement('div');
+    root.className = 'cat-col';
+    const title = document.createElement('div');
+    title.className = 'col-title';
+    title.textContent = c;
+    const body = document.createElement('div');
+    body.className = 'cat-body';
+    root.appendChild(title);
+    root.appendChild(body);
+    root.onclick = () => {
+      if(locked || sel === null) return;
+      place[sel] = i;
+      sel = null;
+      draw();
+    };
+    return {root, body};
+  });
+  colEls.forEach(c => colsWrap.appendChild(c.root));
+  host.appendChild(colsWrap);
+
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn check';
+  checkBtn.textContent = 'Проверить ✅';
+  checkBtn.disabled = true;
+  host.appendChild(checkBtn);
+
+  function draw(){
+    poolItems.innerHTML = '';
+    colEls.forEach(c => { c.body.innerHTML = ''; });
+
+    items.forEach(it => {
+      const b = document.createElement('button');
+      b.className = 'chip-item' + (sel === it.id ? ' sel' : '');
+      b.textContent = it.text;
+
+      if(place[it.id] === undefined){
+        b.onclick = () => {
+          if(locked) return;
+          sel = (sel === it.id) ? null : it.id;
+          draw();
+        };
+        poolItems.appendChild(b);
+      } else {
+        b.onclick = (e) => {
+          e.stopPropagation();
+          if(locked) return;
+          delete place[it.id];
+          sel = null;
+          draw();
+        };
+        colEls[place[it.id]].body.appendChild(b);
+      }
+    });
+
+    checkBtn.disabled = items.some(it => place[it.id] === undefined);
+  }
+  draw();
+
+  checkBtn.onclick = () => {
+    if(locked) return;
+    const ok = items.every(it => place[it.id] === it.cat);
+    const correctStr = t.cats.map((c, i) =>
+      c + ': ' + t.items.filter(x => x.c === i).map(x => x.t).join(', ')
+    ).join('  |  ');
+    submitAnswer(ok, correctStr);
+  };
+}
+
+/* ---------- order ---------- */
+function renderOrder(t, host){
+  const items = shuffle(t.order.map((text, i) => ({id:i, text})));
+  const seq = [];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'order-wrap';
+
+  const leftBox = document.createElement('div');
+  leftBox.className = 'order-box';
+  const leftTitle = document.createElement('div');
+  leftTitle.className = 'col-title';
+  leftTitle.textContent = 'Доступные элементы';
+  const poolItems = document.createElement('div');
+  poolItems.className = 'pool-items';
+  leftBox.appendChild(leftTitle);
+  leftBox.appendChild(poolItems);
+
+  const rightBox = document.createElement('div');
+  rightBox.className = 'order-box';
+  const rightTitle = document.createElement('div');
+  rightTitle.className = 'col-title';
+  rightTitle.textContent = 'Твой порядок (клик — убрать)';
+  const list = document.createElement('div');
+  list.className = 'order-list';
+  rightBox.appendChild(rightTitle);
+  rightBox.appendChild(list);
+
+  wrap.appendChild(leftBox);
+  wrap.appendChild(rightBox);
+  host.appendChild(wrap);
+
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn check';
+  checkBtn.textContent = 'Проверить ✅';
+  checkBtn.disabled = true;
+  host.appendChild(checkBtn);
+
+  function draw(){
+    poolItems.innerHTML = '';
+    list.innerHTML = '';
+
+    items.forEach(it => {
+      if(seq.indexOf(it.id) !== -1) return;
+      const b = document.createElement('button');
+      b.className = 'chip-item';
+      b.textContent = it.text;
+      b.onclick = () => {
+        if(locked) return;
+        seq.push(it.id);
+        draw();
+      };
+      poolItems.appendChild(b);
+    });
+
+    seq.forEach((id, idx) => {
+      const it = items.find(x => x.id === id);
+      const b = document.createElement('button');
+      b.className = 'chip-item inlist';
+      b.innerHTML = '<span class="num-badge">' + (idx + 1) + '</span><span>' + it.text + '</span>';
+      b.onclick = () => {
+        if(locked) return;
+        seq.splice(idx, 1);
+        draw();
+      };
+      list.appendChild(b);
+    });
+
+    checkBtn.disabled = seq.length !== items.length;
+  }
+  draw();
+
+  checkBtn.onclick = () => {
+    if(locked) return;
+    const ok = seq.every((id, i) => id === i);
+    submitAnswer(ok, t.order.join(' → '));
+  };
+}
+
+/* =========================================================
+   ПРОВЕРКА ОТВЕТА
+   ========================================================= */
+function submitAnswer(isCorrect, correctText){
+  if(locked) return;
+  locked = true;
+
+  const t = TASKS[state.idx];
+
+  $('stage').querySelectorAll('button').forEach(b => { b.disabled = true; });
+
+  const fb = document.createElement('div');
+  fb.className = 'feedback ' + (isCorrect ? 'ok' : 'bad');
+
+  let html = '';
+
+  if(isCorrect){
+    state.combo++;
+    if(state.combo > state.maxCombo) state.maxCombo = state.combo;
+
+    let mult = 1;
+    if(state.combo >= 5) mult = 2;
+    else if(state.combo >= 3) mult = 1.5;
+
+    const speedBonus = Math.round(60 * (state.timeLeft / TOTAL_TIME));
+    const gained = Math.round((100 + speedBonus) * mult);
+
+    state.score += gained;
+    state.correct++;
+
+    html += '<div class="fb-title">✅ Верно! +' + gained + ' очков</div>';
+    html += '<div class="fb-sub">База <b>100</b> + бонус за скорость <b>' + speedBonus +
+            '</b> × множитель <b>x' + mult.toFixed(1) + '</b>' +
+            (state.combo >= 3 ? ' 🔥 серия ' + state.combo + ' подряд!' : '') + '</div>';
+  } else {
+    state.lives--;
+    state.combo = 0;
+
+    if(t.tag === 'text'  || t.tag === 'both') state.errText++;
+    if(t.tag === 'pixel' || t.tag === 'both') state.errPixel++;
+
+    html += '<div class="fb-title">❌ Неверно</div>';
+    html += '<div class="fb-sub">Правильный ответ: <b>' + correctText + '</b></div>';
+  }
+
+  if(t.exp){
+    html += '<div class="fb-sub">💡 ' + t.exp + '</div>';
+  }
+
+  fb.innerHTML = html;
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'btn next';
+  nextBtn.textContent = (state.idx === TASKS.length - 1) ? 'Завершить 🏁' : 'Далее ➡️';
+  nextBtn.onclick = () => { nextTask(); };
+  fb.appendChild(nextBtn);
+
+  currentCard.appendChild(fb);
+  fb.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  updateHUD();
+
+  if(state.lives <= 0){
+    nextBtn.disabled = true;
+    nextBtn.textContent = '💔 Жизни закончились...';
+    setTimeout(() => { endGame(false); }, 1100);
+  }
+}
+
+function nextTask(){
+  if(state.over) return;
+  state.idx++;
+  if(state.idx >= TASKS.length){
+    endGame(true);
+    return;
+  }
+  renderTask();
+}
+
+/* =========================================================
+   ТАЙМЕР
+   ========================================================= */
+function startTimer(){
+  clearInterval(timerId);
+  timerId = setInterval(() => {
+    if(state.over) return;
+    state.timeLeft--;
+    if(state.timeLeft <= 0){
+      state.timeLeft = 0;
+      updateHUD();
+      endGame(false);
+      return;
+    }
+    updateHUD();
+  }, 1000);
+}
+
+/* =========================================================
+   СТАРТ / ФИНАЛ
+   ========================================================= */
+function startGame(){
+  initAudio();
+
+  state = {
+    idx: 0,
+    lives: MAX_LIVES,
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    correct: 0,
+    timeLeft: TOTAL_TIME,
+    errText: 0,
+    errPixel: 0,
+    over: false
+  };
+
+  $('startScreen').classList.remove('active');
+  $('endScreen').classList.remove('active');
+  $('gameScreen').classList.add('active');
+
+  updateHUD();
+  renderTask();
+  startTimer();
+}
+
+function endGame(won){
+  if(state.over) return;
+  state.over = true;
+  clearInterval(timerId);
+
+  const earnedNow = {};
+  if(won){
+    if(state.errText === 0)  earnedNow.ascii = true;
+    if(state.errPixel === 0) earnedNow.pixel = true;
+    if(state.timeLeft >= 600) earnedNow.speed = true;
+  }
+
+  const allBadges = Object.assign({}, loadBadges(), earnedNow);
+  saveBadges(allBadges);
+
+  const prevBest = loadBest();
+  const best = Math.max(prevBest, state.score);
+  saveBest(best);
+
+  // ---- итоговые цифры ----
+  $('finalScore').textContent = state.score;
+  $('finalCorrect').textContent = state.correct + '/30';
+  $('finalCombo').textContent = state.maxCombo;
+  $('finalTime').textContent = fmtTime(Math.max(0, state.timeLeft));
+
+  const titleEl = $('endTitle');
+  if(won){
+    $('endEmoji').textContent = '🏆';
+    titleEl.textContent = 'ПОБЕДА!';
+    titleEl.className = 'end-title win';
+    $('endMsg').textContent = 'Ты прошёл все 30 заданий и стал настоящим кодером информации! 🎉';
+  } else {
+    $('endEmoji').textContent = state.lives <= 0 ? '💔' : '⏰';
+    titleEl.textContent = 'ИГРА ОКОНЧЕНА';
+    titleEl.className = 'end-title lose';
+    $('endMsg').textContent = state.lives <= 0
+      ? 'Жизни закончились. Попробуй ещё раз — у тебя получится!'
+      : 'Время вышло! Потренируйся и попробуй снова.';
+  }
+
+  // ---- бейджи ----
+  const box = $('badgesBox');
+  box.innerHTML = '';
+  BADGE_DEFS.forEach(def => {
+    const has = !!allBadges[def.id];
+    const isNew = !!earnedNow[def.id];
+    const d = document.createElement('div');
+    d.className = 'badge-card' + (has ? ' earned' : '');
+    d.innerHTML =
+      '<div class="bi">' + def.icon + '</div>' +
+      '<div class="bn">' + def.name + '</div>' +
+      '<div class="bd">' + def.desc + '</div>' +
+      (isNew ? '<div class="new">НОВОЕ!</div>' : '');
+    box.appendChild(d);
+  });
+
+  $('bestLine').textContent = '🥇 Лучший результат: ' + best + ' очков';
+
+  $('gameScreen').classList.remove('active');
+  $('endScreen').classList.add('active');
+
+  if(won) playWin(); else playLose();
+}
+
+/* =========================================================
+   ИНИЦИАЛИЗАЦИЯ
+   ========================================================= */
+$('startBtn').addEventListener('click', () => {
+  initAudio();
+  startGame();
+});
+$('againBtn').addEventListener('click', () => {
+  initAudio();
+  startGame();
+});
+
+})();
+</script>
+</body>
+</html>
